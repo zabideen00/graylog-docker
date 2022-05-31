@@ -27,4 +27,5 @@ Run the docker-compose.
 Now go to the [http://localhost:9000](http://localhost:9000) to access Graylog server. Enter the following credentials to login
 
 ```username: admin```
+
 ```password: SHA256 hashed password```
