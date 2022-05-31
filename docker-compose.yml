@@ -1,0 +1,66 @@
+version: "3.8"
+services:
+
+  mongo:
+    image: mongo:4.2
+    restart: unless-stopped
+    container_name: mongo
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    networks:
+      - gl-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
+    restart: unless-stopped
+    container_name: elasticsearch
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    depends_on:
+      - mongo
+    environment:
+      - "http.host=0.0.0.0"
+      - "discovery.type=single-node"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    networks:
+      - gl-network
+
+  graylog:
+    image: graylog/graylog:4.2
+    restart: unless-stopped
+    container_name: graylog
+    depends_on:
+      - elasticsearch
+    ports:
+      - "9000:9000"
+      - "12201:12201"
+      - "1514:1514"
+    volumes:
+      - graylog-1:/opt/graylog/data
+      - graylog-2:/usr/share/graylog/data
+    links:
+      - "elasticsearch:elasticsearch"
+      - "mongo:mongo"
+    environment:
+      - GRAYLOG_PASSWORD_SECRET=${GRAYLOG_PASSWORD}
+      - GRAYLOG_ROOT_PASSWORD_SHA2=${GRAYLOG_ROOT_PASSWORD}
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+    networks:
+      - gl-network
+
+networks:
+  gl-network:
+    name: gl-network
+
+volumes:
+  mongo-data:
+    name: mongo-data
+  mongo-config:
+    name: mongo-config
+  es-data:
+    name: es-data
+  graylog-1:
+    name: graylog-1
+  graylog-2:
+    name: graylog-2
